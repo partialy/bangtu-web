@@ -4,8 +4,19 @@ export interface WebNotice {
   id: number;
   title: string;
   content: string;
+  summary?: string;
+  contentType?: 'html' | 'text';
   isTop?: number;
+  popupEnabled?: number;
   publishTime?: string;
+}
+
+export interface WebBanner {
+  id: number;
+  title?: string;
+  image: string;
+  link?: string;
+  target?: number;
 }
 
 export interface InfoItem {
@@ -51,7 +62,9 @@ export interface StoreItem {
 }
 
 export interface HomeData {
+  banners: WebBanner[];
   notices: WebNotice[];
+  popupNotice?: WebNotice | null;
   topInfos: InfoItem[];
   latestInfos: InfoItem[];
   stores: StoreItem[];

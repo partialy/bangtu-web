@@ -34,6 +34,7 @@ src/
 ├── common/
 │   ├── index.ts
 │   ├── AppShell.tsx
+│   ├── MobileActivity.tsx
 │   ├── BottomTabs.tsx
 │   ├── Button.tsx
 │   ├── EmptyState.tsx
@@ -267,6 +268,38 @@ export interface ProjectItem {
 }
 ```
 
+### 5.6 首页轮播和公告类型
+
+```ts
+export interface WebBanner {
+  id: number;
+  title?: string;
+  image: string;
+  link?: string;
+  target?: number;
+}
+
+export interface WebNotice {
+  id: number;
+  title: string;
+  content: string;
+  summary?: string;
+  contentType?: 'html' | 'text';
+  isTop?: number;
+  popupEnabled?: number;
+  publishTime?: string;
+}
+
+export interface HomeData {
+  banners: WebBanner[];
+  notices: WebNotice[];
+  popupNotice?: WebNotice | null;
+  topInfos: InfoItem[];
+  latestInfos: InfoItem[];
+  stores: StoreItem[];
+}
+```
+
 ### 5.5 用户和订单类型
 
 ```ts
@@ -313,13 +346,27 @@ export interface WebOrder {
 
 建议顺序：
 
-1. 顶部定位/搜索。
-2. 公告条。
-3. 4 个小图标快捷入口。
-4. 紧凑统计卡片。
-5. 置顶信息。
-6. 推荐商家。
-7. 最新信息流。
+1. `HeaderBar`，居中展示平台名称，右侧可放安全/菜单图标。
+2. 地区选择 + 小号搜索框，地区选择在搜索左侧。
+3. 首页轮播图，数据来自 `homeService.getHomeData().banners`，前端只渲染，不直接读取旧表。
+4. 公告条，展示 `homeService.getHomeData().notices[0]`，置顶公告优先，点击进入公告详情，更多进入公告列表。
+5. 4 个小图标快捷入口。
+6. 紧凑统计卡片。
+7. 置顶信息。
+8. 推荐商家。
+9. 最新信息流。
+
+首页弹窗公告：
+
+- `homeService.getHomeData().popupNotice` 不为空时展示弹窗。
+- 弹窗展示后用 `localStorage` 记录公告 ID，避免同一公告重复弹出。
+- 用户点击“查看详情”时关闭弹窗并进入公告详情页。
+
+详情页容器：
+
+- 移动端详情页优先复用 `src/common/MobileActivity.tsx`。
+- `HeaderBar` 必须支持左、中、右插槽，返回按钮使用 `BackButton`。
+- 内容放在 `ActivityShell` children 中，页面进入使用 `framer-motion` 做从右向左滑入的手机 App 动画。
 
 ### 6.3 信息列表
 
@@ -354,6 +401,14 @@ export interface WebOrder {
 - 未登录展示手机号验证码登录。
 - 已登录展示用户信息、我的发布、我的订单、退款入口。
 - V1 不展示钱包、积分、会员购买。
+
+### 6.9 公告
+
+- 公告列表调用 `noticeService.listNotices`。
+- 公告详情调用 `noticeService.getNoticeDetail`。
+- 公告内容支持 HTML 片段，渲染容器必须限制图片最大宽度为 100%，避免撑破移动端。
+- 首页公告条只展示标题或摘要，不展示图片。
+- 后台公告编辑后续建议接入富文本编辑器；图片仍走七牛前端直传，上传成功后把图片 URL 插入富文本 HTML。
 
 ### 6.8 管理后台
 
@@ -415,7 +470,10 @@ VITE_WEB_CRYPTO_ENABLED=false
 
 - `web/src/App.tsx` 不再用登录态拦截整个应用；未登录可进入首页、商家列表和信息流。
 - `web/src/pages/HomeShell.tsx` 是当前用户端移动 App 壳，底部导航为：首页、商家、发布、项目、我的。
-- 首页数据通过 `homeService.getHomeData` 获取，信息流通过 `infoService.listInfo` 获取，商家列表通过 `storeService.listStores` 获取。
+- 首页数据通过 `homeService.getHomeData` 获取，信息流通过 `infoService.listInfo` 获取，商家列表通过 `storeService.listStores` 获取，公告列表/详情通过 `noticeService.listNotices`、`noticeService.getNoticeDetail` 获取。
+- 首页顶部当前为 `HeaderBar + 地区选择 + 搜索 + 轮播图 + 公告条`；轮播图使用后端从旧小程序 `tp_ad` 聚合出来的 `banners`。
+- 公告详情页和公告列表页使用 `web/src/common/MobileActivity.tsx` 的 Activity 容器，进入时使用 `framer-motion` 滑入动画。
+- 首页弹窗公告使用 `popupNotice`，并通过 `localStorage` 保存已弹公告 ID 去重。
 - 页面组件只调用 service 方法，不直接拼接 `/api/web/**`。
 - 发布信息当前接入 `infoService.publishInfo`，V1 表单先覆盖标题、内容、联系人、手机号、城市、详细地址；图片直传七牛后续在表单中补齐。
 - 商家卡片当前展示旧 `tp_store` 的 Logo、名称、推荐/置顶/信誉标记、介绍、地址和拨号入口。

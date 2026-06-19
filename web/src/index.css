@@ -30,3 +30,25 @@ button,
 input {
   font: inherit;
 }
+
+.notice-html {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.notice-html p {
+  margin: 0 0 0.75rem;
+}
+
+.notice-html img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 14px;
+  margin: 0.75rem 0;
+}
+
+.notice-html a {
+  color: #2563eb;
+  text-decoration: underline;
+}

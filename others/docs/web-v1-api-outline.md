@@ -194,8 +194,8 @@ Response Data：
 - Method: `GET`
 - Auth: 否
 - Frontend Service: `getHomeData`
-- Related Tables: `web_notice`, `web_info`, `tp_circle`, `web_project`, `tp_addon_work`, `tp_store`, `web_config`
-- Description: 首页公告、置顶信息、最新信息、项目和商家聚合。
+- Related Tables: `tp_ad`, `web_notice`, `web_info`, `tp_circle`, `web_project`, `tp_addon_work`, `tp_store`, `web_config`
+- Description: 首页轮播图、首页置顶公告、弹窗公告、置顶信息、最新信息、项目和商家聚合。
 
 Request Query：
 
@@ -207,11 +207,36 @@ Response Data：
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
-| `notices` | array | 公告 |
+| `banners` | array | 首页轮播图，来自旧小程序 `tp_ad` 的 `ad_type=1`、`open=1` |
+| `notices` | array | 首页公告，当前只返回最新置顶/最新已发布公告 |
+| `popupNotice` | object/null | 首页弹窗公告，`popup_enabled=1` 且已发布时返回；前端用 localStorage 记录已弹公告 ID |
 | `topInfos` | array | 置顶信息 |
 | `latestInfos` | array | 最新信息 |
 | `projects` | array | 推荐项目 |
 | `stores` | array | 推荐商家 |
+
+`banners` 字段：
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `id` | number | `tp_ad.ad_id` |
+| `title` | string | 广告名称 |
+| `image` | string | 轮播图片 |
+| `link` | string | 跳转链接 |
+| `target` | number | 旧广告目标类型 |
+
+`popupNotice`/`notices[]` 字段：
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `id` | number | 公告 ID |
+| `title` | string | 公告标题 |
+| `content` | string | 公告内容，支持 HTML 片段 |
+| `summary` | string | 公告摘要 |
+| `contentType` | string | `html` 或 `text` |
+| `isTop` | number | 是否置顶，1 是，0 否 |
+| `popupEnabled` | number | 是否进入首页弹窗，1 是，0 否 |
+| `publishTime` | string | 发布时间 |
 
 ## 5. 信息接口
 
@@ -399,7 +424,20 @@ Body：
 - Auth: 否
 - Frontend Service: `listNotices`
 - Related Tables: `web_notice`
-- Description: 已发布公告列表。
+- Description: 已发布公告列表；置顶公告优先，再按发布时间和 ID 倒序。
+
+Response Data：
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `id` | number | 公告 ID |
+| `title` | string | 公告标题 |
+| `content` | string | 公告内容，支持 HTML 片段 |
+| `summary` | string | 公告摘要 |
+| `contentType` | string | `html` 或 `text` |
+| `isTop` | number | 是否置顶 |
+| `popupEnabled` | number | 是否首页弹窗 |
+| `publishTime` | string | 发布时间 |
 
 ### 10.2 公告详情
 
@@ -408,7 +446,7 @@ Body：
 - Auth: 否
 - Frontend Service: `getNoticeDetail`
 - Related Tables: `web_notice`
-- Description: 公告详情。
+- Description: 公告详情；HTML 内容由前端富文本展示容器渲染。
 
 ## 11. 文件上传
 
@@ -471,9 +509,24 @@ Response Data：
 - `GET /api/web/admin/notice/list`：`listAdminNotices`
 - `POST /api/web/admin/notice`：`createNotice`
 - `PUT /api/web/admin/notice/{id}`：`updateNotice`
-- `DELETE /api/web/admin/notice/{id}`：`deleteNotice`
 
-Related Tables: `web_notice`, `web_audit_log`
+Auth: 管理员
+
+Related Tables: `web_notice`
+
+Body：
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `title` | string | 是 | 公告标题 |
+| `content` | string | 是 | 公告内容，支持 HTML 片段 |
+| `summary` | string | 否 | 摘要，用于首页公告条和列表预览 |
+| `contentType` | string | 否 | `html` 或 `text`，默认 `html` |
+| `status` | number | 否 | 0 草稿，1 发布，2 下架 |
+| `isTop` | number | 否 | 0 否，1 是；首页公告置顶优先 |
+| `popupEnabled` | number | 否 | 0 否，1 是；前端进入首页时弹窗展示并用公告 ID 去重 |
+
+Note: 后台公告编辑建议接入富文本编辑器，图片通过七牛前端直传后将图片 URL 插入 HTML；置顶公告在首页公告条展示时只使用标题/摘要，不展示图片。
 
 ### 12.5 信息审核
 
@@ -566,9 +619,9 @@ Body：
 - `GET /api/web/home`
   - Auth: 否
   - Frontend Service: `getHomeData`
-  - Data: `{ "notices": [], "topInfos": [], "latestInfos": [], "stores": [] }`
-  - Related Tables: `web_notice`, `web_info`, `tp_circle`, `tp_store`, `web_config`
-  - Note: `stores` 来自旧 `tp_store`，只读展示；旧 PHP 序列化图片字段会在 Java 层提取为图片 URL 数组。
+  - Data: `{ "banners": [], "notices": [], "popupNotice": null, "topInfos": [], "latestInfos": [], "stores": [] }`
+  - Related Tables: `tp_ad`, `web_notice`, `web_info`, `tp_circle`, `tp_store`, `web_config`
+  - Note: `banners` 来自旧 `tp_ad` 小程序轮播广告，只读展示；`stores` 来自旧 `tp_store`，只读展示；旧 PHP 序列化图片字段会在 Java 层提取为图片 URL 数组。
 
 - `GET /api/web/info/list?page=1&size=10`
   - Auth: 否
@@ -603,3 +656,33 @@ Body：
   - Auth: 管理员登录
   - Frontend Service: `adminAuthService.getMe`
   - Related Tables: `web_admin_user`
+
+### 15.5 Web 公告
+
+- `GET /api/web/notice/list`
+  - Auth: 否
+  - Frontend Service: `listNotices`
+  - Related Tables: `web_notice`
+  - Note: 只返回 `status=1` 的已发布公告，置顶优先。
+
+- `GET /api/web/notice/{id}`
+  - Auth: 否
+  - Frontend Service: `getNoticeDetail`
+  - Related Tables: `web_notice`
+  - Note: 用于公告详情页，支持 HTML 片段展示。
+
+- `GET /api/web/admin/notice/list`
+  - Auth: 管理员登录
+  - Frontend Service: `listAdminNotices`
+  - Related Tables: `web_notice`
+
+- `POST /api/web/admin/notice`
+  - Auth: 管理员登录
+  - Frontend Service: `createNotice`
+  - Related Tables: `web_notice`
+  - Body: `title`、`content`、`summary`、`contentType`、`status`、`isTop`、`popupEnabled`
+
+- `PUT /api/web/admin/notice/{id}`
+  - Auth: 管理员登录
+  - Frontend Service: `updateNotice`
+  - Related Tables: `web_notice`

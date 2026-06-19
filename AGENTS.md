@@ -41,6 +41,8 @@ others/sqls/        # 数据库迁移 SQL
 - 加密响应统一使用 `{ "enc": true, "encData": "base64" }`，Base64 解码并 AES 解密后的内容必须是 `Result` JSON 字符串。
 - Web 文件上传默认前端直传七牛，Java 后端只签发上传 token，不接收或转发文件流；旧 `/api/file/upload` 保留给旧接口，不作为 Web V1 上传入口。
 - 每次实现或修改后端接口，必须同步更新 `others/docs/web-v1-api-outline.md` 或后续正式接口文档。接口文档必须包含路径、方法、鉴权要求、请求参数、响应字段、错误情况、加密行为、关联表和前端 service 方法名。
+- Web 首页轮播图只读旧小程序广告表 `tp_ad` 中 `open=1`、`ad_type=1` 的数据，排序沿用小程序：`sort asc, ad_id desc`；Web 不写旧广告表。
+- Web 公告使用 `web_notice`，支持 `summary`、`content_type`、`popup_enabled`；前台公告详情可渲染后台发布的 HTML 片段，后台发布 HTML 时必须来自管理员可信输入。
 
 ## React 前端规范
 
@@ -54,6 +56,9 @@ others/sqls/        # 数据库迁移 SQL
 - 加密解密、token 注入、Result 解析、401 处理必须在统一请求层完成。
 - 前端实现前先阅读 `others/docs/web-v1-frontend-guide.md`。
 - 网站视觉风格使用简约白蓝配色，整体应保持干净、轻量、偏移动 App 的实用界面，不做厚重营销风格。
+- 移动端详情页优先复用 `web/src/common/MobileActivity.tsx` 的 `ActivityShell`、`HeaderBar`、`BackButton`，按手机 App Activity 思路组织：HeaderBar 支持左中右插槽，页面内容放在 ActivityShell children 中。
+- 用户端首页顶部结构当前为 HeaderBar、地区选择、搜索、轮播图、公告条；不要再恢复成大块营销 hero。
+- 公告弹窗是否展示由后端 `popupNotice` 决定，前端用 `localStorage` 记录已展示公告 ID 去重。
 
 ## Current Web V1 Documents
 
@@ -69,8 +74,11 @@ others/sqls/        # 数据库迁移 SQL
 - 后台 API 前缀统一由 `admin/src/services/http.ts` 维护为 `/api/web/admin`，后台页面和 `adminAuthService` 不得硬编码完整接口路径。
 - Web 用户登录已实现：`POST /api/web/auth/send-code`、`POST /api/web/auth/login`、`GET /api/web/auth/me`；请求体手机号字段统一叫 `mobile`。
 - Web 首页与信息基础接口已实现：`GET /api/web/home`、`GET /api/web/info/list`、`POST /api/web/info`；发布信息只写 `web_info`，旧小程序 `tp_circle` 只读展示。
+- Web 首页 `GET /api/web/home` 已返回 `banners`、`notices`、`popupNotice`、`topInfos`、`latestInfos`、`stores`；`banners` 来自旧 `tp_ad` 只读轮播，`notices` 当前只放首页置顶/最新公告，公告列表另走 `/api/web/notice/list`。
 - Web 商家列表已实现：`GET /api/web/store/list`；只读旧小程序 `tp_store`，不会写入旧商家表。首页 `GET /api/web/home` 会额外返回 `stores` 推荐商家。
 - 用户端首页框架已按小程序结构改为移动端白蓝风格：搜索头部、公告条、快捷入口、统计、置顶信息、推荐商家、最新消息信息流；底部导航为 `首页 / 商家 / 发布 / 项目 / 我的`，第二栏固定为商家列表，原资讯位置调整为项目列表。
 - 用户端未登录也可浏览首页、信息流和商家列表；发布和“我的”中的用户操作需要登录。前端请求统一通过 `web/src/services/*Service.ts`，页面不得硬编码 `/api/web/**`。
 - Web 独立后台登录已实现：`POST /api/web/admin/auth/login`、`GET /api/web/admin/auth/me`；后台 Java 代码必须放在 `dataserver-java/src/main/java/cn/example/dataserver/web/admin/controller`、`web/admin/services`、`web/admin/dto`。
 - `web_admin_user` 为空时，后台登录会根据 yml 的 `web.admin.default.*` 初始化默认管理员；生产环境必须修改默认密码。
+- Web 公告用户端接口已实现：`GET /api/web/notice/list`、`GET /api/web/notice/{id}`。
+- Web 后台公告接口已实现：`GET /api/web/admin/notice/list`、`POST /api/web/admin/notice`、`PUT /api/web/admin/notice/{id}`；V1 支持发布状态、置顶、首页弹窗和 HTML 内容。
