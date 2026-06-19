@@ -408,20 +408,32 @@ Body：
 
 ## 11. 文件上传
 
-### 11.1 上传文件
+### 11.1 获取七牛上传凭证
 
-- Path: `/api/web/file/upload`
-- Method: `POST`
+- Path: `/api/web/file/upload-token`
+- Method: `GET`
 - Auth: 用户登录
-- Frontend Service: `uploadFile`
-- Related Tables: 无，V1 可不落库
-- Description: 图片上传，配置从 YML 读取，后续可接七牛。
+- Frontend Service: `getQiniuUploadToken`
+- Related Tables: 无，V1 不落库
+- Description: Java 后端只签发七牛上传凭证，前端拿到 token 后直传七牛，不经过后端转发文件流。
 
-Body：
+Response Data：
 
-| 字段 | 类型 | 必填 | 说明 |
-| --- | --- | --- | --- |
-| `file` | multipart file | 是 | 文件 |
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `uploadToken` | string | 七牛上传凭证 |
+| `uploadUrl` | string | 七牛浏览器直传地址 |
+| `domain` | string | 图片访问域名 |
+| `cdnDomain` | string | CDN 图片访问域名 |
+| `keyPrefix` | string | 建议文件 key 前缀，前端最终 key 必须以此前缀开头 |
+| `expires` | number | 上传凭证有效期，单位秒 |
+
+前端流程：
+
+1. 调用 `getQiniuUploadToken` 获取上传凭证。
+2. 在 `fileService.uploadToQiniu` 中将文件、`token`、最终 `key` 直传到 `uploadUrl`。
+3. 七牛上传成功后，用 `domain + '/' + key` 生成图片 URL。
+4. 发布信息或项目时，把图片 URL 或 key 写入 `images` 数组。
 
 ## 12. 后台接口
 

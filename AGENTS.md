@@ -39,6 +39,7 @@ others/sqls/        # 数据库迁移 SQL
 - Controller 只接收参数、做基础校验、调用 Service、返回结果；业务逻辑放在 `services/*BisService.java`。
 - Web V1 API 统一返回 `cn.example.dataserver.common.Result` JSON。
 - 加密响应统一使用 `{ "enc": true, "encData": "base64" }`，Base64 解码并 AES 解密后的内容必须是 `Result` JSON 字符串。
+- Web 文件上传默认前端直传七牛，Java 后端只签发上传 token，不接收或转发文件流；旧 `/api/file/upload` 保留给旧接口，不作为 Web V1 上传入口。
 - 每次实现或修改后端接口，必须同步更新 `others/docs/web-v1-api-outline.md` 或后续正式接口文档。接口文档必须包含路径、方法、鉴权要求、请求参数、响应字段、错误情况、加密行为、关联表和前端 service 方法名。
 
 ## React 前端规范

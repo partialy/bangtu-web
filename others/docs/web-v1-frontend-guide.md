@@ -92,7 +92,7 @@ src/
 - 处理加密响应 `{ enc: true, encData: string }`。
 - 统一抛出业务错误。
 - 统一处理 401 登录失效。
-- 统一处理上传进度和文件上传。
+- 统一处理七牛上传凭证获取、七牛直传和上传进度。
 
 页面禁止直接写接口路径。正确方式：
 
@@ -175,6 +175,8 @@ Service 方法按业务命名，不按 URL 命名：
 - `getStoreDetail`
 - `listNotices`
 - `getNoticeDetail`
+- `getQiniuUploadToken`
+- `uploadToQiniu`
 
 后台：
 
@@ -327,7 +329,7 @@ export interface WebOrder {
 
 - 登录后可进入。
 - 表单字段：标题、内容、分类、图片、联系人、手机号、地区、详细地址。
-- 图片上传走 `fileService.uploadFile`。
+- 图片上传走 `fileService.getQiniuUploadToken` 和 `fileService.uploadToQiniu`，前端直传七牛，后端不转发文件流。
 - 提交走 `infoService.publishInfo`。
 - 提交后根据后端返回状态展示“已发布”或“待审核”。
 
