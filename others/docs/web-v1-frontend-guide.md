@@ -157,9 +157,9 @@ export interface EncryptedResult {
 
 Service 方法按业务命名，不按 URL 命名：
 
-- `sendLoginCode`
-- `loginByMobile`
-- `getCurrentUser`
+- `sendCode`
+- `login`
+- `getMe`
 - `getHomeData`
 - `listInfo`
 - `getInfoDetail`
@@ -180,7 +180,8 @@ Service 方法按业务命名，不按 URL 命名：
 
 后台：
 
-- `adminLogin`
+- `login`
+- `getMe`
 - `getWebConfig`
 - `updateWebConfig`
 - `listAdminNotices`
@@ -357,6 +358,7 @@ export interface WebOrder {
 - 可以先复用移动端布局或做简单响应式后台。
 - 页面包括配置、公告、信息审核、项目审核、订单、退款。
 - 后台接口和普通用户接口的 token 分开存储。
+- 用户端在 `web/`，后台在 `admin/`，两套前端项目各自维护 `src/services/http.ts`、状态存储和 token，不允许互相复用登录态。
 
 ## 7. TanStack Query 使用要求
 

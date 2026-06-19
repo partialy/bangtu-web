@@ -61,3 +61,13 @@ others/sqls/        # 数据库迁移 SQL
 - `others/docs/web-v1-frontend-guide.md`
 - `others/docs/web-v1-api-outline.md`
 - `others/sqls/2606191357-web-v1-schema.sql`
+
+## 当前实现基线（260619）
+
+- 用户端前端在 `web/`，后台前端在 `admin/`，两者是独立 Vite React 项目，分别维护自己的 `src/services/http.ts`、状态存储和 token。
+- 用户端 API 前缀统一由 `web/src/services/http.ts` 维护为 `/api/web`，页面和业务 service 不得硬编码完整接口路径。
+- 后台 API 前缀统一由 `admin/src/services/http.ts` 维护为 `/api/web/admin`，后台页面和 `adminAuthService` 不得硬编码完整接口路径。
+- Web 用户登录已实现：`POST /api/web/auth/send-code`、`POST /api/web/auth/login`、`GET /api/web/auth/me`；请求体手机号字段统一叫 `mobile`。
+- Web 首页与信息基础接口已实现：`GET /api/web/home`、`GET /api/web/info/list`、`POST /api/web/info`；发布信息只写 `web_info`，旧小程序 `tp_circle` 只读展示。
+- Web 独立后台登录已实现：`POST /api/web/admin/auth/login`、`GET /api/web/admin/auth/me`；后台 Java 代码必须放在 `dataserver-java/src/main/java/cn/example/dataserver/web/admin/controller`、`web/admin/services`、`web/admin/dto`。
+- `web_admin_user` 为空时，后台登录会根据 yml 的 `web.admin.default.*` 初始化默认管理员；生产环境必须修改默认密码。

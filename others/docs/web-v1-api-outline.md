@@ -131,7 +131,7 @@ Authorization: Bearer <adminToken>
 - Path: `/api/web/auth/send-code`
 - Method: `POST`
 - Auth: 否
-- Frontend Service: `sendLoginCode`
+- Frontend Service: `sendCode`
 - Related Tables: `web_sms_code`, `web_config`
 - Description: 发送或记录 Web 手机号登录验证码。
 
@@ -148,13 +148,15 @@ Response Data：
 | --- | --- | --- |
 | `sent` | boolean | 是否已触发真实短信发送 |
 | `expireSeconds` | number | 过期秒数 |
+| `expiresIn` | number | 当前实现字段，验证码有效期秒数 |
+| `bypassEnabled` | boolean | 当前实现字段，是否开启免校验验证码 |
 
 ### 3.2 手机号登录
 
 - Path: `/api/web/auth/login`
 - Method: `POST`
 - Auth: 否
-- Frontend Service: `loginByMobile`
+- Frontend Service: `login`
 - Related Tables: `tp_users`, `web_sms_code`, `web_config`
 - Description: 手机号验证码登录；配置开启后手机号 + 验证码 `1` 可登录。
 
@@ -170,6 +172,8 @@ Response Data：
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
 | `token` | string | 用户 token |
+| `tokenType` | string | 当前实现字段，固定 `Bearer` |
+| `expiresIn` | number | 当前实现字段，token 过期秒数 |
 | `user` | object | 当前用户 |
 | `isNewWebUser` | boolean | 是否首次 Web 登录 |
 
@@ -178,7 +182,7 @@ Response Data：
 - Path: `/api/web/auth/me`
 - Method: `GET`
 - Auth: 用户登录
-- Frontend Service: `getCurrentUser`
+- Frontend Service: `getMe`
 - Related Tables: `tp_users`
 - Description: 返回当前登录用户。
 
@@ -531,3 +535,60 @@ Body：
 - 接口实现后补充 Example Request 和 Example Response。
 - 修改接口入参、出参、鉴权、加密行为时必须同步更新本文档。
 - 前端 service 方法名发生变化时必须同步更新本文档和 `web-v1-frontend-guide.md`。
+
+## 15. 当前已实现接口（260619）
+
+本节记录当前代码已经落地、可联调的 Web V1 接口；后续继续实现时，以本节为当前事实基线。
+
+### 15.1 用户端登录
+
+- `POST /api/web/auth/send-code`
+  - Auth: 否
+  - Frontend Service: `sendCode`
+  - Body: `{ "mobile": "13800138000" }`
+  - Data: `{ "sent": false, "bypassEnabled": true, "expiresIn": 300 }`
+  - Related Tables: `web_sms_code`, `web_config`
+
+- `POST /api/web/auth/login`
+  - Auth: 否
+  - Frontend Service: `login`
+  - Body: `{ "mobile": "13800138000", "code": "1" }`
+  - Data: `{ "token": "...", "tokenType": "Bearer", "expiresIn": 2592000, "user": { ... } }`
+  - Related Tables: `tp_users`, `web_sms_code`, `web_config`
+
+- `GET /api/web/auth/me`
+  - Auth: 用户登录
+  - Frontend Service: `getMe`
+  - Related Tables: `tp_users`
+
+### 15.2 用户端首页与信息
+
+- `GET /api/web/home`
+  - Auth: 否
+  - Data: `{ "notices": [], "topInfos": [], "latestInfos": [] }`
+  - Related Tables: `web_notice`, `web_info`, `tp_circle`, `web_config`
+
+- `GET /api/web/info/list?page=1&size=10`
+  - Auth: 否
+  - Related Tables: `web_info`, `tp_circle`
+  - Note: 双源只读展示；Web 新信息来自 `web_info`，小程序旧信息来自 `tp_circle`。
+
+- `POST /api/web/info`
+  - Auth: 用户登录
+  - Frontend Service: `publishInfo`
+  - Related Tables: `web_info`, `web_config`
+  - Note: 只写 `web_info`，不会写入 `tp_circle`。
+
+### 15.3 Web 独立后台登录
+
+- `POST /api/web/admin/auth/login`
+  - Auth: 否
+  - Frontend Service: `adminAuthService.login`
+  - Body: `{ "username": "admin", "password": "admin123456" }`
+  - Related Tables: `web_admin_user`
+  - Note: `web_admin_user` 为空时会按 yml 的 `web.admin.default.*` 初始化默认管理员。
+
+- `GET /api/web/admin/auth/me`
+  - Auth: 管理员登录
+  - Frontend Service: `adminAuthService.getMe`
+  - Related Tables: `web_admin_user`
