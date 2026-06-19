@@ -52,7 +52,7 @@ const emptyHomeData: HomeData = {
 
 function PageShell({ children }: { children: React.ReactNode }) {
   return (
-    <section className="mx-auto min-h-screen w-full max-w-[430px] px-4 pb-[96px] pt-[max(18px,env(safe-area-inset-top))]">
+    <section className="mx-auto min-h-screen w-full max-w-[430px] overflow-x-hidden px-3 pb-[96px] pt-[max(18px,env(safe-area-inset-top))] sm:px-4">
       {children}
     </section>
   );
@@ -60,7 +60,7 @@ function PageShell({ children }: { children: React.ReactNode }) {
 
 function SectionTitle({ title, action }: { title: string; action?: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex min-w-0 items-center justify-between gap-3">
       <h2 className="text-lg font-bold text-slate-950">{title}</h2>
       {action}
     </div>
@@ -98,7 +98,7 @@ function HomePage({
 
   return (
     <PageShell>
-      <header className="rounded-b-[30px] bg-brand-600 px-4 pb-5 pt-4 text-white shadow-soft">
+      <header className="rounded-[26px] bg-brand-600 px-4 pb-5 pt-4 text-white shadow-soft">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-blue-100">帮涂好师傅</p>
@@ -123,12 +123,12 @@ function HomePage({
         <p className="min-w-0 flex-1 truncate text-sm font-medium text-slate-600">{noticeText}</p>
       </section>
 
-      <section className="mt-4 grid grid-cols-4 gap-2">
+      <section className="mt-4 grid min-w-0 grid-cols-4 gap-2">
         {shortcuts.map((item) => {
           const Icon = item.icon;
           return (
             <button
-              className="flex min-h-[78px] flex-col items-center justify-center gap-2 rounded-[20px] border border-blue-100 bg-white text-sm font-semibold text-slate-700 shadow-sm transition active:scale-95"
+              className="flex min-h-[76px] min-w-0 flex-col items-center justify-center gap-2 rounded-[18px] border border-blue-100 bg-white px-1 text-center text-[13px] font-semibold text-slate-700 shadow-sm transition active:scale-95"
               key={item.label}
               type="button"
               onClick={() => onTabChange(item.tab)}
@@ -142,7 +142,7 @@ function HomePage({
         })}
       </section>
 
-      <section className="mt-5 rounded-[24px] bg-white p-4 shadow-sm">
+      <section className="mt-5 rounded-[24px] bg-white px-3 py-4 shadow-sm">
         <div className="grid grid-cols-3 divide-x divide-blue-100 text-center">
           <div>
             <p className="text-xl font-bold text-slate-950">{data.latestInfos.length}</p>
@@ -162,7 +162,7 @@ function HomePage({
       {topInfos.length > 0 ? (
         <section className="mt-5">
           <SectionTitle title="置顶信息" />
-          <div className="mt-3 grid gap-3">
+          <div className="mt-3 grid min-w-0 gap-3">
             {topInfos.map((item) => (
               <InfoCard item={item} key={`${item.sourceType}-${item.sourceId}`} />
             ))}
@@ -179,7 +179,7 @@ function HomePage({
             </button>
           }
         />
-        <div className="mt-3 flex gap-3 overflow-x-auto pb-1">
+        <div className="mt-3 flex max-w-full gap-3 overflow-x-auto pb-1">
           {data.stores.slice(0, 6).map((store) => (
             <button
               className="w-[132px] shrink-0 rounded-[22px] border border-blue-100 bg-white p-3 text-left shadow-sm"
@@ -203,7 +203,7 @@ function HomePage({
 
       <section className="mt-5">
         <SectionTitle title="最新消息" />
-        <div className="mt-3 grid gap-3">
+        <div className="mt-3 grid min-w-0 gap-3">
           {loading ? <LoadingBlock /> : null}
           {!loading && displayInfos.length === 0 ? <EmptyBlock text="暂无信息内容" /> : null}
           {displayInfos.map((item) => (
@@ -227,7 +227,7 @@ function StorePage({ stores, loading }: { stores: StoreItem[]; loading: boolean 
           <Building2 size={22} />
         </div>
       </header>
-      <div className="mt-5 grid gap-3">
+      <div className="mt-5 grid min-w-0 gap-3">
         {loading ? <LoadingBlock /> : null}
         {!loading && stores.length === 0 ? <EmptyBlock text="暂无商家数据" /> : null}
         {stores.map((store) => (
