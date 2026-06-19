@@ -18,7 +18,7 @@ others/sqls/        # 数据库迁移 SQL
 - `dataserver-java/` 是独立 Git 仓库，根仓库必须通过 `.gitignore` 忽略它，不要在 `bangtu-web` 根仓库提交 Java 子仓库内容。
 - `hsf.sql` 是本地数据库副本，根仓库必须忽略；线上迁移只提交 `others/sqls/` 下带时间戳的迁移脚本。
 - 压缩包、构建产物、依赖目录、环境变量文件不得提交。
-- 每次开始实现前必须先在 `bangtu-web` 根目录执行 `git pull --rebase` 拉取最新代码，避免覆盖其他 AI 或开发者提交。
+- 当前项目由 Codex 统一负责 Git 操作；用户已确认无需每次实现前强制拉取最新代码。只有用户明确要求同步远端，或确认有其他开发者已推送时，再执行 `git pull --rebase`。
 - 每次实现完成并验证后，用中文提交信息提交并推送到远程仓库。
 - 前端 AI 主要负责 `web/`、`admin/` 和前端文档；后端实现者主要负责 Java 独立仓库和 `others/docs`、`others/sqls` 中的后端/数据库文档。
 - 如果本地存在他人未提交改动，先确认改动来源和范围，不要覆盖、不回滚无关改动。
@@ -69,5 +69,8 @@ others/sqls/        # 数据库迁移 SQL
 - 后台 API 前缀统一由 `admin/src/services/http.ts` 维护为 `/api/web/admin`，后台页面和 `adminAuthService` 不得硬编码完整接口路径。
 - Web 用户登录已实现：`POST /api/web/auth/send-code`、`POST /api/web/auth/login`、`GET /api/web/auth/me`；请求体手机号字段统一叫 `mobile`。
 - Web 首页与信息基础接口已实现：`GET /api/web/home`、`GET /api/web/info/list`、`POST /api/web/info`；发布信息只写 `web_info`，旧小程序 `tp_circle` 只读展示。
+- Web 商家列表已实现：`GET /api/web/store/list`；只读旧小程序 `tp_store`，不会写入旧商家表。首页 `GET /api/web/home` 会额外返回 `stores` 推荐商家。
+- 用户端首页框架已按小程序结构改为移动端白蓝风格：搜索头部、公告条、快捷入口、统计、置顶信息、推荐商家、最新消息信息流；底部导航为 `首页 / 商家 / 发布 / 项目 / 我的`，第二栏固定为商家列表，原资讯位置调整为项目列表。
+- 用户端未登录也可浏览首页、信息流和商家列表；发布和“我的”中的用户操作需要登录。前端请求统一通过 `web/src/services/*Service.ts`，页面不得硬编码 `/api/web/**`。
 - Web 独立后台登录已实现：`POST /api/web/admin/auth/login`、`GET /api/web/admin/auth/me`；后台 Java 代码必须放在 `dataserver-java/src/main/java/cn/example/dataserver/web/admin/controller`、`web/admin/services`、`web/admin/dto`。
 - `web_admin_user` 为空时，后台登录会根据 yml 的 `web.admin.default.*` 初始化默认管理员；生产环境必须修改默认密码。

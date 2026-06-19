@@ -565,8 +565,10 @@ Body：
 
 - `GET /api/web/home`
   - Auth: 否
-  - Data: `{ "notices": [], "topInfos": [], "latestInfos": [] }`
-  - Related Tables: `web_notice`, `web_info`, `tp_circle`, `web_config`
+  - Frontend Service: `getHomeData`
+  - Data: `{ "notices": [], "topInfos": [], "latestInfos": [], "stores": [] }`
+  - Related Tables: `web_notice`, `web_info`, `tp_circle`, `tp_store`, `web_config`
+  - Note: `stores` 来自旧 `tp_store`，只读展示；旧 PHP 序列化图片字段会在 Java 层提取为图片 URL 数组。
 
 - `GET /api/web/info/list?page=1&size=10`
   - Auth: 否
@@ -579,7 +581,16 @@ Body：
   - Related Tables: `web_info`, `web_config`
   - Note: 只写 `web_info`，不会写入 `tp_circle`。
 
-### 15.3 Web 独立后台登录
+### 15.3 用户端商家
+
+- `GET /api/web/store/list?page=1&size=20`
+  - Auth: 否
+  - Frontend Service: `listStores`
+  - Related Tables: `tp_store`
+  - Data: `[{ "storeId": 140, "storeName": "...", "storeLogo": "...", "contactsMobile": "...", "city": "...", "isTop": 0, "isHot": 1, "images": [] }]`
+  - Note: V1 只读旧商家数据，筛选 `deleted=0`、`status=1`；按置顶、热门、推荐、排序和审核时间排序。
+
+### 15.4 Web 独立后台登录
 
 - `POST /api/web/admin/auth/login`
   - Auth: 否

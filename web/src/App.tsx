@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { HomeShell } from '@/pages/HomeShell';
-import { LoginPage } from '@/pages/LoginPage';
 import { getMe } from '@/services/authService';
 import { useAuthStore } from '@/stores/authStore';
 import { message } from '@/utils/message';
@@ -27,7 +26,7 @@ export default function App() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-white via-blue-50/70 to-white">
-      {token ? <HomeShell /> : <LoginPage />}
+      <HomeShell />
     </main>
   );
 }

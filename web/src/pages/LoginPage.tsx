@@ -4,6 +4,10 @@ import { login, sendCode } from '@/services/authService';
 import { useAuthStore } from '@/stores/authStore';
 import { message } from '@/utils/message';
 
+interface LoginPageProps {
+  compact?: boolean;
+}
+
 function normalizePhone(value: string) {
   return value.replace(/\D/g, '').slice(0, 11);
 }
@@ -12,7 +16,7 @@ function validatePhone(phone: string) {
   return /^1\d{10}$/.test(phone);
 }
 
-export function LoginPage() {
+export function LoginPage({ compact = false }: LoginPageProps) {
   const setSession = useAuthStore((state) => state.setSession);
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
@@ -61,7 +65,11 @@ export function LoginPage() {
   }
 
   return (
-    <section className="mx-auto flex min-h-screen w-full max-w-[430px] flex-col px-6 pb-8 pt-[max(42px,env(safe-area-inset-top))]">
+    <section
+      className={`mx-auto flex w-full max-w-[430px] flex-col px-6 ${
+        compact ? 'pb-4 pt-4' : 'min-h-screen pb-8 pt-[max(42px,env(safe-area-inset-top))]'
+      }`}
+    >
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-semibold text-brand-600">帮涂用户端</p>
@@ -72,7 +80,7 @@ export function LoginPage() {
         </div>
       </div>
 
-      <div className="mt-10 rounded-[28px] border border-blue-100 bg-white p-5 shadow-soft">
+      <div className={`${compact ? 'mt-6' : 'mt-10'} rounded-[28px] border border-blue-100 bg-white p-5 shadow-soft`}>
         <div className="flex items-center gap-3 rounded-3xl bg-blue-50/70 p-4">
           <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white text-brand-600">
             <Smartphone size={22} strokeWidth={2.4} />
@@ -128,7 +136,7 @@ export function LoginPage() {
         </form>
       </div>
 
-      <p className="mt-auto pt-8 text-center text-xs leading-5 text-slate-400">
+      <p className={`${compact ? 'pt-5' : 'mt-auto pt-8'} text-center text-xs leading-5 text-slate-400`}>
         登录即表示你同意平台服务规则，用户信息仅用于当前服务流程。
       </p>
     </section>
