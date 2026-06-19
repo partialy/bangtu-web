@@ -1,0 +1,521 @@
+# 帮涂 Web V1 接口文档大纲
+
+> 本文档是后续实现接口时必须维护的 API 文档骨架。每次新增或修改后端接口，都要同步更新本文档。
+
+## 1. 基础约定
+
+### 1.1 服务地址
+
+- 本地 Java：`http://localhost:38989/api`
+- Web V1 前缀：`/web`
+- 外部完整接口：`/api/web/**`
+
+### 1.2 Java 包与返回规范
+
+- Web V1 后端代码统一放在：`cn.example.dataserver.web`
+- 数据库操作统一使用 MyBatis-Plus。
+- 所有普通接口统一返回 `cn.example.dataserver.common.Result` 的 JSON 字符串。
+
+`Result<T>` 格式：
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": {},
+  "errorMsg": null,
+  "success": true
+}
+```
+
+### 1.3 加密响应
+
+生产环境开启加密后，接口响应外层为：
+
+```json
+{
+  "enc": true,
+  "encData": "base64"
+}
+```
+
+说明：
+
+- `encData` 是 Base64 字符串。
+- Base64 解码后再 AES 解密。
+- 解密后的明文必须是 `Result.java` 格式 JSON 字符串。
+- 前端统一在 `src/services/httpClient.ts` 中处理，不允许页面组件处理。
+
+### 1.4 鉴权
+
+普通用户：
+
+```http
+Authorization: Bearer <userToken>
+```
+
+后台管理员：
+
+```http
+Authorization: Bearer <adminToken>
+```
+
+未登录可访问：
+
+- 首页
+- 信息列表/详情
+- 项目列表/详情
+- 商家列表/详情
+- 公告列表/详情
+
+必须登录：
+
+- 发布信息
+- 项目下单
+- 拨打电话记录
+- 我的订单
+- 退款申请
+
+必须管理员登录：
+
+- 配置管理
+- 公告管理
+- 信息审核
+- 项目审核
+- 订单查看
+- 退款处理
+
+## 2. 接口文档填写模板
+
+每个接口实现后必须按此模板补齐：
+
+```md
+### 接口名称
+
+- Path:
+- Method:
+- Auth:
+- Frontend Service:
+- Related Tables:
+- Description:
+
+#### Request Query
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+
+#### Request Body
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+
+#### Response Data
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+
+#### Example Request
+
+#### Example Response
+
+#### Error Cases
+
+| code | msg | 说明 |
+| --- | --- | --- |
+```
+
+## 3. 用户与登录
+
+### 3.1 发送验证码
+
+- Path: `/api/web/auth/send-code`
+- Method: `POST`
+- Auth: 否
+- Frontend Service: `sendLoginCode`
+- Related Tables: `web_sms_code`, `web_config`
+- Description: 发送或记录 Web 手机号登录验证码。
+
+Request Body：
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `mobile` | string | 是 | 手机号 |
+| `scene` | string | 否 | 场景，默认 `login` |
+
+Response Data：
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `sent` | boolean | 是否已触发真实短信发送 |
+| `expireSeconds` | number | 过期秒数 |
+
+### 3.2 手机号登录
+
+- Path: `/api/web/auth/login`
+- Method: `POST`
+- Auth: 否
+- Frontend Service: `loginByMobile`
+- Related Tables: `tp_users`, `web_sms_code`, `web_config`
+- Description: 手机号验证码登录；配置开启后手机号 + 验证码 `1` 可登录。
+
+Request Body：
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `mobile` | string | 是 | 手机号 |
+| `code` | string | 是 | 验证码 |
+
+Response Data：
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `token` | string | 用户 token |
+| `user` | object | 当前用户 |
+| `isNewWebUser` | boolean | 是否首次 Web 登录 |
+
+### 3.3 当前用户
+
+- Path: `/api/web/auth/me`
+- Method: `GET`
+- Auth: 用户登录
+- Frontend Service: `getCurrentUser`
+- Related Tables: `tp_users`
+- Description: 返回当前登录用户。
+
+## 4. 首页
+
+### 4.1 首页聚合
+
+- Path: `/api/web/home`
+- Method: `GET`
+- Auth: 否
+- Frontend Service: `getHomeData`
+- Related Tables: `web_notice`, `web_info`, `tp_circle`, `web_project`, `tp_addon_work`, `tp_store`, `web_config`
+- Description: 首页公告、置顶信息、最新信息、项目和商家聚合。
+
+Request Query：
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `city` | string | 否 | 城市筛选 |
+
+Response Data：
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `notices` | array | 公告 |
+| `topInfos` | array | 置顶信息 |
+| `latestInfos` | array | 最新信息 |
+| `projects` | array | 推荐项目 |
+| `stores` | array | 推荐商家 |
+
+## 5. 信息接口
+
+### 5.1 信息列表
+
+- Path: `/api/web/info/list`
+- Method: `GET`
+- Auth: 否
+- Frontend Service: `listInfo`
+- Related Tables: `web_info`, `tp_circle`
+- Description: Web 信息和小程序信息双源分页列表。
+
+Query：
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `page` | number | 否 | 页码，默认 1 |
+| `size` | number | 否 | 每页数量，默认 20 |
+| `keyword` | string | 否 | 搜索词 |
+| `categoryId` | number | 否 | 分类 |
+| `city` | string | 否 | 城市 |
+
+### 5.2 信息详情
+
+- Path: `/api/web/info/{sourceType}/{sourceId}`
+- Method: `GET`
+- Auth: 否
+- Frontend Service: `getInfoDetail`
+- Related Tables: `web_info` 或 `tp_circle`
+- Description: 根据信息来源分流详情。
+
+Path：
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `sourceType` | string | 是 | `web` 或 `miniapp` |
+| `sourceId` | number | 是 | 来源 ID |
+
+### 5.3 发布信息
+
+- Path: `/api/web/info`
+- Method: `POST`
+- Auth: 用户登录
+- Frontend Service: `publishInfo`
+- Related Tables: `web_info`, `web_config`
+- Description: 用户发布 Web 信息，只写 `web_info`。
+
+Body：
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `title` | string | 是 | 标题 |
+| `content` | string | 是 | 内容 |
+| `categoryId` | number | 否 | 分类 ID |
+| `categoryName` | string | 否 | 分类名称 |
+| `images` | string[] | 否 | 图片 URL |
+| `contactName` | string | 否 | 联系人 |
+| `contactMobile` | string | 否 | 联系电话 |
+| `province` | string | 否 | 省份 |
+| `city` | string | 否 | 城市 |
+| `district` | string | 否 | 区县 |
+| `address` | string | 否 | 详细地址 |
+
+## 6. 项目接口
+
+### 6.1 项目列表
+
+- Path: `/api/web/project/list`
+- Method: `GET`
+- Auth: 否
+- Frontend Service: `listProjects`
+- Related Tables: `web_project`, `tp_addon_work`
+- Description: Web 项目和小程序项目双源分页列表。
+
+### 6.2 项目详情
+
+- Path: `/api/web/project/{sourceType}/{sourceId}`
+- Method: `GET`
+- Auth: 否
+- Frontend Service: `getProjectDetail`
+- Related Tables: `web_project` 或 `tp_addon_work`
+- Description: 根据来源读取项目详情。
+
+### 6.3 项目下单
+
+- Path: `/api/web/project/order`
+- Method: `POST`
+- Auth: 用户登录
+- Frontend Service: `createProjectOrder`
+- Related Tables: `web_project_order`, `web_project`, `tp_addon_work`
+- Description: 生成项目意向单，V1 不接在线支付。
+
+Body：
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `sourceType` | string | 是 | `web` 或 `miniapp` |
+| `sourceId` | number | 是 | 项目来源 ID |
+| `amount` | number | 否 | 订单金额 |
+| `contactName` | string | 否 | 联系人 |
+| `contactMobile` | string | 否 | 联系电话 |
+| `remark` | string | 否 | 备注 |
+
+## 7. 订单与退款
+
+### 7.1 我的订单
+
+- Path: `/api/web/order/my`
+- Method: `GET`
+- Auth: 用户登录
+- Frontend Service: `listMyOrders`
+- Related Tables: `web_project_order`
+- Description: 当前用户项目意向单列表。
+
+### 7.2 订单详情
+
+- Path: `/api/web/order/{id}`
+- Method: `GET`
+- Auth: 用户登录
+- Frontend Service: `getOrderDetail`
+- Related Tables: `web_project_order`, `web_order_refund`
+- Description: 当前用户订单详情。
+
+### 7.3 申请退款
+
+- Path: `/api/web/order/{id}/refund`
+- Method: `POST`
+- Auth: 用户登录
+- Frontend Service: `applyOrderRefund`
+- Related Tables: `web_project_order`, `web_order_refund`
+- Description: 提交退款申请，V1 只记录申请。
+
+Body：
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `reason` | string | 是 | 退款原因 |
+
+## 8. 拨号记录
+
+### 8.1 记录拨号
+
+- Path: `/api/web/call`
+- Method: `POST`
+- Auth: 用户登录
+- Frontend Service: `recordCall`
+- Related Tables: `web_call_record`
+- Description: 用户点击拨号前记录行为。
+
+Body：
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `targetType` | string | 是 | `info`、`project`、`store` |
+| `sourceType` | string | 是 | `web` 或 `miniapp` |
+| `sourceId` | number | 是 | 来源 ID |
+| `mobile` | string | 是 | 手机号 |
+
+## 9. 商家接口
+
+### 9.1 商家列表
+
+- Path: `/api/web/store/list`
+- Method: `GET`
+- Auth: 否
+- Frontend Service: `listStores`
+- Related Tables: `tp_store`
+- Description: 读取旧商家数据，只读展示。
+
+### 9.2 商家详情
+
+- Path: `/api/web/store/{id}`
+- Method: `GET`
+- Auth: 否
+- Frontend Service: `getStoreDetail`
+- Related Tables: `tp_store`
+- Description: 商家详情。
+
+## 10. 公告接口
+
+### 10.1 公告列表
+
+- Path: `/api/web/notice/list`
+- Method: `GET`
+- Auth: 否
+- Frontend Service: `listNotices`
+- Related Tables: `web_notice`
+- Description: 已发布公告列表。
+
+### 10.2 公告详情
+
+- Path: `/api/web/notice/{id}`
+- Method: `GET`
+- Auth: 否
+- Frontend Service: `getNoticeDetail`
+- Related Tables: `web_notice`
+- Description: 公告详情。
+
+## 11. 文件上传
+
+### 11.1 上传文件
+
+- Path: `/api/web/file/upload`
+- Method: `POST`
+- Auth: 用户登录
+- Frontend Service: `uploadFile`
+- Related Tables: 无，V1 可不落库
+- Description: 图片上传，配置从 YML 读取，后续可接七牛。
+
+Body：
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `file` | multipart file | 是 | 文件 |
+
+## 12. 后台接口
+
+### 12.1 管理员登录
+
+- Path: `/api/web/admin/auth/login`
+- Method: `POST`
+- Auth: 否
+- Frontend Service: `adminLogin`
+- Related Tables: `web_admin_user`
+- Description: Web 管理后台登录。
+
+### 12.2 配置查询
+
+- Path: `/api/web/admin/config`
+- Method: `GET`
+- Auth: 管理员
+- Frontend Service: `getWebConfig`
+- Related Tables: `web_config`
+
+### 12.3 配置更新
+
+- Path: `/api/web/admin/config`
+- Method: `PUT`
+- Auth: 管理员
+- Frontend Service: `updateWebConfig`
+- Related Tables: `web_config`, `web_audit_log`
+
+### 12.4 公告管理
+
+- `GET /api/web/admin/notice/list`：`listAdminNotices`
+- `POST /api/web/admin/notice`：`createNotice`
+- `PUT /api/web/admin/notice/{id}`：`updateNotice`
+- `DELETE /api/web/admin/notice/{id}`：`deleteNotice`
+
+Related Tables: `web_notice`, `web_audit_log`
+
+### 12.5 信息审核
+
+- `GET /api/web/admin/info/list`：`listInfoAudit`
+- `POST /api/web/admin/info/{id}/audit`：`auditInfo`
+
+Related Tables: `web_info`, `web_audit_log`
+
+Body：
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `status` | number | 是 | 1 通过，2 拒绝，3 下架 |
+| `remark` | string | 否 | 审核备注 |
+
+### 12.6 项目审核
+
+- `GET /api/web/admin/project/list`：`listProjectAudit`
+- `POST /api/web/admin/project/{id}/audit`：`auditProject`
+
+Related Tables: `web_project`, `web_audit_log`
+
+### 12.7 订单查看
+
+- Path: `/api/web/admin/order/list`
+- Method: `GET`
+- Auth: 管理员
+- Frontend Service: `listAdminOrders`
+- Related Tables: `web_project_order`
+
+### 12.8 退款处理
+
+- `GET /api/web/admin/refund/list`：`listRefunds`
+- `POST /api/web/admin/refund/{id}/handle`：`handleRefund`
+
+Related Tables: `web_order_refund`, `web_project_order`, `web_audit_log`
+
+Body：
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `status` | number | 是 | 1 同意，2 拒绝 |
+| `remark` | string | 否 | 处理备注 |
+
+## 13. 错误码约定
+
+| code | 说明 |
+| --- | --- |
+| `0` | 成功 |
+| `400` | 参数或业务错误 |
+| `401` | 未登录或 token 失效 |
+| `403` | 无权限 |
+| `404` | 数据不存在 |
+| `500` | 服务异常 |
+
+## 14. 文档维护规则
+
+- 接口实现前先补充本大纲中的字段细节。
+- 接口实现后补充 Example Request 和 Example Response。
+- 修改接口入参、出参、鉴权、加密行为时必须同步更新本文档。
+- 前端 service 方法名发生变化时必须同步更新本文档和 `web-v1-frontend-guide.md`。

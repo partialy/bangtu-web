@@ -1,0 +1,40 @@
+# 独立 Java 仓库，不纳入 bangtu-web 根仓库
+/dataserver-java/
+
+# 本地数据库副本和归档包
+/hsf.sql
+/*.zip
+/*.tar
+/*.tar.gz
+/*.7z
+/*.rar
+
+# 依赖和构建产物
+node_modules/
+dist/
+build/
+.vite/
+.next/
+coverage/
+
+# 环境变量和本地配置
+.env
+.env.*
+!.env.example
+*.local
+
+# 日志和临时文件
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+tmp/
+temp/
+.cache/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
