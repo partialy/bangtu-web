@@ -44,10 +44,12 @@ others/sqls/        # 数据库迁移 SQL
 ## React 前端规范
 
 - React Web 代码统一放在 `web/`。
+- 可复用工具代码模板在 `E:\Projects\Node\utils\src\FallBack\pure\tailwind`，例如消息、通知、对话框等；需要时可以直接复制到当前前端项目中再按本项目结构整理。
 - 请求必须集中封装到 `web/src/services/` 并导出类型安全方法。
 - 页面和 UI 组件禁止直接写 `fetch('/xxx')`、`axios('/xxx')` 或硬编码 `/api/web/**` 请求。
 - 加密解密、token 注入、Result 解析、401 处理必须在统一请求层完成。
 - 前端实现前先阅读 `others/docs/web-v1-frontend-guide.md`。
+- 网站视觉风格使用简约白蓝配色，整体应保持干净、轻量、偏移动 App 的实用界面，不做厚重营销风格。
 
 ## Current Web V1 Documents
 
