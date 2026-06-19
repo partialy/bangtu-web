@@ -45,6 +45,9 @@ others/sqls/        # 数据库迁移 SQL
 
 - React Web 代码统一放在 `web/`。
 - 可复用工具代码模板在 `E:\Projects\Node\utils\src\FallBack\pure\tailwind`，例如消息、通知、对话框等；需要时可以直接复制到当前前端项目中再按本项目结构整理。
+- 前端需要弹窗、操作确认、重要提示时，优先复制并使用 `E:\Projects\Node\utils\src\FallBack\pure\MyDialog.ts`。
+- 发布成功、保存成功、复制成功等轻提示，优先复制并使用 `E:\Projects\Node\utils\src\FallBack\pure\tailwind\message.ts`。
+- 其他工具模板不要预先全量复制，有明确需求时再从模板目录复制进来。
 - 请求必须集中封装到 `web/src/services/` 并导出类型安全方法。
 - 页面和 UI 组件禁止直接写 `fetch('/xxx')`、`axios('/xxx')` 或硬编码 `/api/web/**` 请求。
 - 加密解密、token 注入、Result 解析、401 处理必须在统一请求层完成。
